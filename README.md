@@ -12,7 +12,7 @@
 
 <br/>
 
-**VulnLens** is an advanced, production-ready website security scanner. It performs comprehensive posture checks by analyzing HTTP security headers, TLS certificates, common TCP ports, and technology stacks. Built with scalability in mind, it utilizes an asynchronous architecture to handle concurrent scans efficiently and generates professional PDF reports for its findings.
+**VulnLens** is a website security scanner. It performs comprehensive posture checks by analyzing HTTP security headers, TLS certificates, common TCP ports, and technology stacks. Built with scalability in mind, it utilizes an asynchronous architecture to handle concurrent scans efficiently and generates professional PDF reports for its findings.
 
 > **Defensive Use Only:** VulnLens is strictly for posture checks and configuration analysis. It does **not** exploit vulnerabilities, run offensive payloads, or automate attacks. Always ensure you have authorization to scan a target.
 
