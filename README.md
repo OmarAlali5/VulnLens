@@ -34,12 +34,13 @@
 
 ## Screenshots
 
-* ![Dashboard Preview](https://github.com/OmarAlali5/VulnLens/blob/c44acc698b55710fc1ba9e984346ea6152986b18/Dashboard.png)
-* 
+*  **Dashboard Preview**
+*  ![Dashboard Preview](https://github.com/OmarAlali5/VulnLens/blob/c44acc698b55710fc1ba9e984346ea6152986b18/Dashboard.png)
+* **New Scan**
 * ![New Scan](https://github.com/OmarAlali5/VulnLens/blob/c44acc698b55710fc1ba9e984346ea6152986b18/new-scan.png)
-* 
+* **Scan History & Download PDF**
 * ![Scan History & Download PDF](https://github.com/OmarAlali5/VulnLens/blob/c44acc698b55710fc1ba9e984346ea6152986b18/Scans%20history.png)
-* 
+* **PDF Report**
 * ![PDF Report](https://github.com/OmarAlali5/VulnLens/blob/c44acc698b55710fc1ba9e984346ea6152986b18/pdf-report.png)
 
 ---
