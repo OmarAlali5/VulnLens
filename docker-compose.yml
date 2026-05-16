@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: scanner_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=securepassword123
+      - POSTGRES_DB=security_scanner
+
+  redis:
+    image: redis:7-alpine
+    container_name: scanner_redis
+
+  api:
+    build: .
+    container_name: scanner_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:securepassword123@db:5432/security_scanner
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: scanner_worker
+    # Command to start the Celery worker defined in your core config
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=info
+    volumes:
+      - .:/code
+    environment:
+      - DATABASE_URL=postgresql://postgres:securepassword123@db:5432/security_scanner
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - db
+
+volumes:
+  postgres_data:
