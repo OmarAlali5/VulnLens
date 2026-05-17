@@ -21,7 +21,17 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libjpeg-dev \
     libopenjp2-7-dev \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install subfinder
+RUN wget -qO /tmp/subfinder.zip https://github.com/projectdiscovery/subfinder/releases/download/v2.6.6/subfinder_2.6.6_linux_amd64.zip && \
+    unzip /tmp/subfinder.zip -d /tmp && \
+    mv /tmp/subfinder /usr/local/bin/subfinder && \
+    chmod +x /usr/local/bin/subfinder && \
+    rm /tmp/subfinder.zip
+
 
 # Install Python dependencies
 COPY requirements.txt .

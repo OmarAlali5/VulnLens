@@ -5,6 +5,7 @@ export interface ScanOptions {
   headers_scan: boolean
   port_scan: boolean
   tech_scan: boolean
+  subdomain_scan: boolean
   port_list: number[] | null
 }
 
@@ -56,6 +57,12 @@ export interface ScanDetailResponse {
   updated_at: string
   result: ScanResultPayload | null
   error_message: string | null
+}
+
+export interface Subdomain {
+  hostname: string
+  source: string
+  status: string
 }
 
 export interface HealthResponse {

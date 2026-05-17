@@ -9,11 +9,12 @@ import type { ScanOptions } from '@/types/scan'
 import { validateScanTarget } from '@/utils/validateScanTarget'
 import { cn } from '@/utils/cn'
 
-const DEFAULT_OPTIONS: Pick<ScanOptions, 'ssl_scan' | 'headers_scan' | 'port_scan' | 'tech_scan'> = {
+const DEFAULT_OPTIONS: Pick<ScanOptions, 'ssl_scan' | 'headers_scan' | 'port_scan' | 'tech_scan' | 'subdomain_scan'> = {
   ssl_scan: true,
   headers_scan: true,
   port_scan: true,
   tech_scan: true,
+  subdomain_scan: true,
 }
 
 const SCAN_MODULES = [
@@ -37,6 +38,11 @@ const SCAN_MODULES = [
     label: 'Technology Fingerprinting',
     description: 'Passive detection of web servers, frameworks, CMS, CDNs, and libraries.',
   },
+  {
+    id: 'subdomain_scan' as const,
+    label: 'Subdomain Enumeration',
+    description: 'Passive discovery using multiple OSINT sources via Subfinder.',
+  },
 ]
 
 interface ScanFormProps {
@@ -52,7 +58,7 @@ export function ScanForm({ className }: ScanFormProps) {
   const [fieldError, setFieldError] = useState<string | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
 
-  const updateOption = (key: keyof typeof DEFAULT_OPTIONS, value: boolean) => {
+  const updateOption = (key: keyof ScanOptions, value: boolean) => {
     setOptions((prev) => ({ ...prev, [key]: value }))
     setFieldError(null)
     setApiError(null)

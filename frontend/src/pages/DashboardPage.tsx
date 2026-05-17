@@ -26,6 +26,11 @@ const MODULES = [
     icon: '🔍',
   },
   {
+    name: 'Subdomain Enumeration',
+    description: 'Passive discovery of subdomains using multiple OSINT sources via Subfinder.',
+    icon: '🌐',
+  },
+  {
     name: 'PDF Reports',
     description: 'Professional reports with severity summaries and module findings.',
     icon: '📄',

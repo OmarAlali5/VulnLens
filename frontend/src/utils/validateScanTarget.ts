@@ -7,7 +7,7 @@ export interface ScanTargetValidation {
 
 export function validateScanTarget(
   target: string,
-  options: Pick<ScanOptions, 'ssl_scan' | 'headers_scan' | 'port_scan'>,
+  options: Pick<ScanOptions, 'ssl_scan' | 'headers_scan' | 'port_scan' | 'subdomain_scan'>,
 ): ScanTargetValidation {
   const trimmed = target.trim()
 
@@ -27,7 +27,7 @@ export function validateScanTarget(
     return { valid: false, error: 'Enter a valid URL (e.g. https://example.com)' }
   }
 
-  if (!options.ssl_scan && !options.headers_scan && !options.port_scan) {
+  if (!options.ssl_scan && !options.headers_scan && !options.port_scan && !options.subdomain_scan) {
     return { valid: false, error: 'Enable at least one scan module' }
   }
 

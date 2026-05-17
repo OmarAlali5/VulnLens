@@ -7,6 +7,7 @@ import { ScanProgress } from '@/components/scan-results/ScanProgress'
 import { ScanResultsSkeleton } from '@/components/scan-results/ScanResultsSkeleton'
 import { ScanTimeline } from '@/components/scan-results/ScanTimeline'
 import { StatusIndicator } from '@/components/scan-results/StatusIndicator'
+import { SubdomainSection } from '@/components/scan-results/SubdomainSection'
 import { SeveritySummary } from '@/components/SeveritySummary'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -163,12 +164,17 @@ export function ScanDetailPage() {
         </Card>
       </div>
 
+      <SubdomainSection
+        module={modules.subdomain as ModuleResult | undefined}
+        className="findings-section-enter"
+      />
+
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-100">Module findings</h2>
             <p className="mt-0.5 text-sm text-slate-500">
-              Headers, SSL/TLS, and port analysis grouped by scanner module
+              Headers, SSL/TLS, port, and technology analysis grouped by scanner module
             </p>
           </div>
         </div>

@@ -11,7 +11,7 @@ export interface NormalizedFinding {
   recommendation: string
 }
 
-export const MODULE_ORDER = ['headers', 'ssl', 'ports', 'technology'] as const
+export const MODULE_ORDER = ['headers', 'ssl', 'ports', 'technology', 'subdomain'] as const
 
 export type ModuleKey = (typeof MODULE_ORDER)[number]
 
@@ -20,6 +20,7 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   ssl: 'SSL/TLS',
   ports: 'Ports',
   technology: 'Technology',
+  subdomain: 'Subdomain Enumeration',
 }
 
 export const MODULE_ICONS: Record<ModuleKey, string> = {
@@ -27,6 +28,7 @@ export const MODULE_ICONS: Record<ModuleKey, string> = {
   ssl: '🔒',
   ports: '🔌',
   technology: '🔍',
+  subdomain: '🌐',
 }
 
 const SEVERITY_WEIGHTS: Record<SeverityLevel, number> = {
