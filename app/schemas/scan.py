@@ -12,6 +12,7 @@ class ScanOptions(BaseModel):
     headers_scan: bool = True
     ssl_scan: bool = True
     tech_scan: bool = True
+    subdomain_scan: bool = True
     port_list: list[int] | None = None
 
 

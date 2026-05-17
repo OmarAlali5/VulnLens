@@ -1,27 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <title>VulnLens Report — {{ target_url }}</title>
   <style>
-    body { font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; margin: 2cm; }
-    h1 { font-size: 20pt; color: #0f172a; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
-    h2 { font-size: 14pt; color: #1e40af; margin-top: 24px; }
-    .meta { color: #64748b; font-size: 9pt; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
-    th { background: #f1f5f9; }
-    .badge-critical { color: #fff; background: #7f1d1d; padding: 2px 6px; border-radius: 3px; }
-    .badge-high { color: #fff; background: #b91c1c; padding: 2px 6px; border-radius: 3px; }
-    .badge-medium { color: #fff; background: #c2410c; padding: 2px 6px; border-radius: 3px; }
-    .badge-low { color: #fff; background: #a16207; padding: 2px 6px; border-radius: 3px; }
-    .badge-info { color: #fff; background: #475569; padding: 2px 6px; border-radius: 3px; }
-    .summary-grid { margin: 16px 0; }
-    .summary-box { display: inline-block; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 6px; min-width: 80px; text-align: center; margin-right: 8px; }
-    .summary-box strong { display: block; font-size: 18pt; }
-    pre { background: #f8fafc; padding: 10px; font-size: 8pt; overflow-wrap: break-word; white-space: pre-wrap; }
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 11pt;
+      color: #1a1a1a;
+      margin: 2cm;
+    }
+
+    h1 {
+      font-size: 20pt;
+      color: #0f172a;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 14pt;
+      color: #1e40af;
+      margin-top: 24px;
+    }
+
+    .meta {
+      color: #64748b;
+      font-size: 9pt;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    .badge-critical {
+      color: #fff;
+      background: #7f1d1d;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .badge-high {
+      color: #fff;
+      background: #b91c1c;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .badge-medium {
+      color: #fff;
+      background: #c2410c;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .badge-low {
+      color: #fff;
+      background: #a16207;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .badge-info {
+      color: #fff;
+      background: #475569;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .summary-grid {
+      margin: 16px 0;
+    }
+
+    .summary-box {
+      display: inline-block;
+      border: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 6px;
+      min-width: 80px;
+      text-align: center;
+      margin-right: 8px;
+    }
+
+    .summary-box strong {
+      display: block;
+      font-size: 18pt;
+    }
+
+    pre {
+      background: #f8fafc;
+      padding: 10px;
+      font-size: 8pt;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
+
 <body>
   <h1>VulnLens Security Report</h1>
   <div class="meta">
@@ -43,7 +133,12 @@
   {% if all_findings %}
   <table>
     <thead>
-      <tr><th>Module</th><th>Severity</th><th>Code</th><th>Message</th></tr>
+      <tr>
+        <th>Module</th>
+        <th>Severity</th>
+        <th>Code</th>
+        <th>Message</th>
+      </tr>
     </thead>
     <tbody>
       {% for f in all_findings %}
@@ -65,7 +160,12 @@
   <h2>Technology Fingerprints</h2>
   <table>
     <thead>
-      <tr><th>Technology</th><th>Category</th><th>Version</th><th>Confidence</th></tr>
+      <tr>
+        <th>Technology</th>
+        <th>Category</th>
+        <th>Version</th>
+        <th>Confidence</th>
+      </tr>
     </thead>
     <tbody>
       {% for fp in tech.fingerprints %}
@@ -80,9 +180,33 @@
   </table>
   {% endif %}
 
+  {% set sd = modules.get('subdomain', {}) %}
+  {% if sd.get('subdomains') %}
+  <h2>Subdomain Discovery</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Hostname</th>
+        <th>Source</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in sd.subdomains %}
+      <tr>
+        <td>{{ entry.hostname }}</td>
+        <td>{{ entry.source }}</td>
+        <td>{{ entry.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
   {% for module_name, module_json in module_jsons.items() %}
   <h2>{{ module_name|upper }} Module</h2>
   <pre>{{ module_json }}</pre>
   {% endfor %}
 </body>
+
 </html>

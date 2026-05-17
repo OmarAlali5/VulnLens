@@ -1,1 +1,1 @@
-"""Modular scanning services (headers, SSL, ports, technology, PDF)."""
+"""Modular scanning services (headers, SSL, ports, technology, subdomain, PDF)."""

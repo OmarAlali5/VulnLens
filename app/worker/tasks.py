@@ -13,6 +13,7 @@ from app.services.common import summarize_findings
 from app.services.headers import inspect_headers_async
 from app.services.ports import scan_ports_async
 from app.services.ssl import inspect_ssl_async
+from app.services.subdomain import discover_subdomains_async
 from app.services.technology import inspect_technology_async
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,8 @@ async def _run_scan_modules(target: str, options: dict[str, Any]) -> dict[str, A
         tasks.append(("ports", scan_ports_async(target, ports=port_list)))
     if options.get("tech_scan", True):
         tasks.append(("technology", inspect_technology_async(target)))
+    if options.get("subdomain_scan", True):
+        tasks.append(("subdomain", discover_subdomains_async(target)))
 
     if not tasks:
         return modules
