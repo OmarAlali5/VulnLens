@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y \
     libpango-1.0-0 \
     libharfbuzz0b \
     libpangoft2-1.0-0 \
+    libcairo2 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    shared-mime-info \
     libffi-dev \
     libjpeg-dev \
     libopenjp2-7-dev \
