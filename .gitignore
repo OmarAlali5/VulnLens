@@ -38,5 +38,5 @@ logs/
 .coverage
 htmlcov/
 
-
+# Cursor
 Architecture_and_Rules.cursorrules

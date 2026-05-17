@@ -58,7 +58,13 @@ def generate_pdf(
     scan_id: str,
     target_url: str,
 ) -> bytes:
-    from weasyprint import HTML
+    try:
+        from weasyprint import HTML
+    except (ImportError, OSError) as e:
+        raise RuntimeError(
+            "WeasyPrint missing GTK+ libraries (libgobject). "
+            "Please start Docker Desktop and run VulnLens via Docker, or install GTK+ on Windows."
+        ) from e
 
     html = render_report_html(payload, scan_id=scan_id, target_url=target_url)
     return HTML(string=html).write_pdf()

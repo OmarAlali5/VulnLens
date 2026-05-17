@@ -31,10 +31,25 @@ export function DownloadReportButton({
   function handleClick() {
     setErrorMsg(null)
     downloadReport.mutate(scanId, {
-      onError: (err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : 'Failed to download report'
-        setErrorMsg(message)
+      onError: (err: any) => {
+        if (err?.response?.data instanceof Blob) {
+          const reader = new FileReader()
+          reader.onload = () => {
+            try {
+              const parsed = JSON.parse(reader.result as string)
+              setErrorMsg(parsed.detail || 'Failed to download report')
+            } catch {
+              setErrorMsg(err.message || 'Failed to download report')
+            }
+          }
+          reader.readAsText(err.response.data)
+        } else {
+          const message =
+            err?.response?.data?.detail ||
+            err?.message ||
+            'Failed to download report'
+          setErrorMsg(message)
+        }
         // Auto-dismiss the error after 5 seconds
         setTimeout(() => setErrorMsg(null), 5000)
       },

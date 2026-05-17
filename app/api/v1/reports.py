@@ -30,11 +30,17 @@ def get_scan_pdf(scan_id: UUID, db: Session = Depends(get_db)) -> Response:
             detail="Scan is not completed or has no results",
         )
 
-    pdf_bytes = generate_pdf(
-        job.result_payload,
-        scan_id=str(job.id),
-        target_url=job.target_url,
-    )
+    try:
+        pdf_bytes = generate_pdf(
+            job.result_payload,
+            scan_id=str(job.id),
+            target_url=job.target_url,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
     filename = f"vulnlens-report-{scan_id}.pdf"
     return Response(
         content=pdf_bytes,
