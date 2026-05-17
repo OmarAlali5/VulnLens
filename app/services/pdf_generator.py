@@ -46,6 +46,7 @@ def render_report_html(payload: dict[str, Any], *, scan_id: str, target_url: str
         target_url=target_url,
         scanned_at=payload.get("scanned_at", ""),
         summary=payload.get("summary", {}),
+        modules=modules,
         module_jsons=module_jsons,
         all_findings=all_findings,
         severity_badge_class=_severity_badge_class,
