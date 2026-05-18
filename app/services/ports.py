@@ -63,7 +63,9 @@ def _resolve_host(target: str) -> str:
 
 
 async def _probe_port(host: str, port: int, *, timeout: float) -> str:
+    """Attempt a raw TCP connection to see if a specific port is listening."""
     try:
+        # Just establish the connection and immediately tear it down
         _, writer = await asyncio.wait_for(
             asyncio.open_connection(host, port),
             timeout=timeout,
@@ -72,6 +74,8 @@ async def _probe_port(host: str, port: int, *, timeout: float) -> str:
         await writer.wait_closed()
         return "open"
     except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+        # We treat timeouts, refused connections, and network errors all as 'closed'
+        # for simplicity, though technically they could be 'filtered' by a firewall.
         return "closed"
 
 
@@ -81,6 +85,8 @@ async def _scan_ports(
     *,
     timeout: float,
 ) -> PortScanResult:
+    """Coordinate the concurrent scanning of multiple ports."""
+    # Prevent flooding the OS with too many simultaneous open sockets
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
     open_ports: list[int] = []
     closed_ports: list[int] = []
@@ -93,12 +99,14 @@ async def _scan_ports(
             else:
                 closed_ports.append(port)
 
+    # Fire them all off at once
     await asyncio.gather(*[scan_one(p) for p in ports])
 
     open_ports.sort()
     closed_ports.sort()
 
     findings: list[Finding] = []
+    # Flag any notoriously dangerous services exposed to the internet
     for port in open_ports:
         if port in DANGEROUS_OPEN_PORTS:
             code, severity = DANGEROUS_OPEN_PORTS[port]
@@ -110,6 +118,7 @@ async def _scan_ports(
                 )
             )
 
+    # If they are serving unencrypted HTTP but no HTTPS, that's a problem
     if 80 in open_ports and 443 not in open_ports:
         findings.append(
             Finding(
@@ -137,6 +146,7 @@ async def scan_ports_async(
 ) -> dict[str, Any]:
     """Scan TCP ports on the host derived from *target*."""
     try:
+        # Strip the URL down to just the raw IP or hostname
         host = _resolve_host(target)
     except ValueError as exc:
         return PortScanResult(
@@ -148,6 +158,7 @@ async def scan_ports_async(
     port_tuple = tuple(ports) if ports else DEFAULT_PORTS
 
     try:
+        # Validate that the host actually exists before we waste time scanning it
         await asyncio.to_thread(socket.getaddrinfo, host, None)
     except socket.gaierror as exc:
         return PortScanResult(
