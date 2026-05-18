@@ -20,12 +20,16 @@ import { cn } from '@/utils/cn'
 
 export function ScanDetailPage() {
   const { scanId } = useParams<{ scanId: string }>()
+  
+  // React Query automatically handles the polling if the scan is still running
   const { data: scan, isLoading, isFetching, isError, error } = useScan(scanId)
 
+  // Show a nice skeleton loader while the initial fetch happens
   if (isLoading) {
     return <ScanResultsSkeleton />
   }
 
+  // Handle completely invalid IDs or server errors gracefully
   if (isError || !scan) {
     return (
       <div className="mx-auto max-w-lg animate-fade-in text-center">
@@ -41,7 +45,10 @@ export function ScanDetailPage() {
     )
   }
 
+  // Is the scan still running, pending, or did it finish/fail?
   const active = isActiveScan(scan.status)
+  
+  // Safely extract the payloads, defaulting to null/empty if the scan isn't done yet
   const summary = scan.result?.summary ?? null
   const scannedAt = scan.result?.scanned_at ?? null
   const modules = scan.result?.modules ?? {}
@@ -137,6 +144,7 @@ export function ScanDetailPage() {
           !summary && 'opacity-90',
         )}
       >
+        {/* Render the high-level letter grade/risk score */}
         <RiskScoreCard summary={summary} loading={!summary && active} />
         <Card className="glass-panel">
           <CardContent className="space-y-4">
@@ -147,8 +155,10 @@ export function ScanDetailPage() {
               </p>
             </div>
             {summary ? (
+              // The scan is done, render the colorful breakdown bar
               <SeveritySummary summary={summary} compact />
             ) : (
+              // Scan is still running, render some nice pulsing skeleton bars
               <div className="grid grid-cols-5 gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
