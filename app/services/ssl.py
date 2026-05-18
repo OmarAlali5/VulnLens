@@ -218,6 +218,8 @@ def _run_inspection(
     scan_target = Target(host=host, port=port)
 
     try:
+        # First, try a "strict" handshake exactly like a standard browser would do.
+        # This will fail if the cert is expired, self-signed, or the hostname doesn't match.
         strict = _perform_handshake(host, port, timeout=timeout, verify=True)
     except (socket.timeout, TimeoutError):
         return _error_result(
@@ -244,17 +246,21 @@ def _run_inspection(
             message=f"Network error connecting to {host}:{port}: {exc}",
         )
     except ssl.SSLError as exc:
-        # Host may still present a cert on TLS failure — try permissive fetch.
+        # The strict connection failed (e.g., untrusted cert). But we still want to grab 
+        # the certificate details for analysis. Let's try again with verification disabled.
         try:
             permissive = _perform_handshake(
                 host, port, timeout=timeout, verify=False
             )
         except Exception as inner:
+            # OK, it's really broken. Give up.
             return _error_result(
                 scan_target,
                 code="TLS_HANDSHAKE_FAILED",
                 message=f"TLS handshake failed: {exc}; fallback also failed: {inner}",
             )
+            
+        # We got the cert via the permissive fallback. Flag that the strict handshake failed.
         return _build_success_result(
             scan_target,
             permissive,
@@ -264,6 +270,7 @@ def _run_inspection(
             strict_error=str(exc),
         )
 
+    # Perfect, the strict connection succeeded without any warnings!
     return _build_success_result(
         scan_target,
         strict,
@@ -324,6 +331,7 @@ def _perform_handshake(
     timeout: float,
     verify: bool,
 ) -> _HandshakeResult:
+    # Set up the Python SSL context based on whether we want to strictly verify or not
     context = ssl.create_default_context()
     if verify:
         context.check_hostname = True
@@ -337,17 +345,22 @@ def _perform_handshake(
     chain_der: list[bytes]
     tls_info: TlsInfo
 
+    # Wrap the raw TCP socket in our SSL context
     with _connect(host, port, timeout=timeout) as sock:
         with context.wrap_socket(sock, server_hostname=host) as tls_sock:
             tls_info = _extract_tls_info(tls_sock)
+            
+            # Snatch the raw certificate bytes sent by the server
             peer_der = tls_sock.getpeercert(binary_form=True)
             if not peer_der:
                 raise ssl.SSLError("Peer did not present a certificate")
 
+            # Try to grab the rest of the trust chain
             chain_der = _get_cert_chain_der(tls_sock)
             if not chain_der:
                 chain_der = [peer_der]
 
+    # Convert the raw bytes into a parsed cryptography certificate object
     cert = x509.load_der_x509_certificate(peer_der, default_backend())
     hostname_match = _hostname_matches_cert(host, cert)
 
@@ -606,8 +619,10 @@ def _derive_findings(
     expected_host: str,
     expiring_soon_days: int,
 ) -> list[Finding]:
+    """Generates a list of security findings based on the extracted certificate and TLS data."""
     findings: list[Finding] = []
 
+    # Check for the obvious: is the cert dead?
     if cert.is_expired:
         findings.append(
             Finding(
@@ -616,6 +631,7 @@ def _derive_findings(
                 message=f"Certificate expired on {cert.not_valid_after}",
             )
         )
+    # Check if they need to renew it very soon
     elif cert.is_expiring_soon:
         findings.append(
             Finding(
@@ -628,6 +644,7 @@ def _derive_findings(
             )
         )
 
+    # Flag self-signed certificates as high risk
     if cert.is_self_signed:
         findings.append(
             Finding(
