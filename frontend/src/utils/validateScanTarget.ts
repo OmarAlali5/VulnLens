@@ -16,10 +16,15 @@ export function validateScanTarget(
   }
 
   try {
+    // Native browser URL parsing is the safest way to validate formatting
     const parsed = new URL(trimmed)
+    
+    // We only support standard web protocols
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return { valid: false, error: 'URL must use http:// or https://' }
     }
+    
+    // Ensure they didn't just type "http://" with no actual domain
     if (!parsed.hostname) {
       return { valid: false, error: 'Enter a valid URL (e.g. https://example.com)' }
     }
@@ -27,6 +32,7 @@ export function validateScanTarget(
     return { valid: false, error: 'Enter a valid URL (e.g. https://example.com)' }
   }
 
+  // Prevent users from submitting a scan with literally zero checks enabled
   if (!options.ssl_scan && !options.headers_scan && !options.port_scan && !options.subdomain_scan) {
     return { valid: false, error: 'Enable at least one scan module' }
   }
