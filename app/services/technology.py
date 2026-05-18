@@ -504,6 +504,7 @@ def _match_signature(
     version: str | None = None
 
     # --- Header match ---
+    # First, let's see if there's a dead giveaway in the HTTP headers
     if sig.header_name and sig.header_pattern:
         header_val = lower_headers.get(sig.header_name, "")
         if header_val:
@@ -511,12 +512,14 @@ def _match_signature(
             if pat.search(header_val):
                 matched = True
                 evidence_parts.append(f"Header: {sig.header_name}: {header_val[:120]}")
+                # If we got a hit, let's try to extract the exact version number
                 if sig.version_regex:
                     ver_match = _get_compiled(sig.version_regex).search(header_val)
                     if ver_match:
                         version = ver_match.group(1).rstrip(".-")
 
     # --- Meta generator match ---
+    # Next up: check the <meta name="generator"> tags.
     if sig.meta_generator and meta_generators:
         gen_pat = _get_compiled(sig.meta_generator)
         for gen_val in meta_generators:
@@ -566,12 +569,17 @@ def _deduplicate_fingerprints(
 ) -> list[TechFingerprint]:
     """Keep only the highest-confidence entry per technology name."""
     best: dict[str, TechFingerprint] = {}
+    
+    # We might get multiple hits for the same tech (e.g. from a header AND a script tag).
+    # We want to keep the one that gives us the most confidence or the clearest version info.
     for fp in fingerprints:
         existing = best.get(fp.name)
         if existing is None or fp.confidence > existing.confidence:
             best[fp.name] = fp
         elif fp.confidence == existing.confidence and fp.version and not existing.version:
+            # Tie breaker: prefer the one that actually tells us the version
             best[fp.name] = fp
+            
     return sorted(best.values(), key=lambda f: (-f.confidence, f.name))
 
 
@@ -666,6 +674,8 @@ async def inspect_technology_async(
     logger.info("Technology scan starting for %s", url)
 
     try:
+        # Reach out to the target server. We're not following redirects
+        # because we only want to analyze the exact URL requested.
         async with httpx.AsyncClient(
             follow_redirects=False,
             timeout=timeout,
@@ -681,6 +691,9 @@ async def inspect_technology_async(
         ).to_dict()
 
     headers = dict(response.headers)
+    
+    # Grab the first chunk of the HTML body. We don't want to parse megabytes
+    # of a huge file, so we cap it to MAX_BODY_BYTES.
     body_bytes = response.content[:MAX_BODY_BYTES]
     try:
         body = body_bytes.decode("utf-8", errors="replace")
@@ -688,6 +701,7 @@ async def inspect_technology_async(
         body = ""
 
     try:
+        # Pass the raw data into our analysis engine
         fingerprints, findings = _analyze_response(headers, body)
     except Exception as exc:
         logger.exception("Technology analysis failed for %s", url)
