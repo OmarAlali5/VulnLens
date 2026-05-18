@@ -25,6 +25,7 @@
   * **HTTP Headers:** HSTS, CSP, X-Frame-Options, cookie flags, and server disclosure analysis.
   * **Port Scanning:** Fast, asynchronous TCP probes on curated port lists to identify exposed risky services (e.g., Telnet, RDP, Redis).
   * **Technology Fingerprinting:** Passive detection of underlying technologies, CMS platforms, and frameworks via headers and body signatures.
+  * **Subdomain Enumeration:** Passive discovery of associated subdomains using Subfinder and OSINT sources.
 * **Production-Grade Architecture:** Background job processing via **Celery** and **Redis** ensures the API remains lightning-fast, while **PostgreSQL** provides persistent job and result history.
 * **Professional Reporting:** Export detailed findings, severity summaries, and module-specific data as highly polished PDF reports using WeasyPrint and Jinja2.
 * **Modern Frontend:** A beautiful, responsive UI built with **React 19**, **Vite**, and **Tailwind CSS v4** for managing scans and visualizing reports.
@@ -127,6 +128,7 @@ Set up your `.env` file to customize the deployment. See `.env.example` for defa
     "headers_scan": true,
     "port_scan": true,
     "tech_scan": true,
+    "subdomain_scan": true,
     "port_list": null
   }
 }
