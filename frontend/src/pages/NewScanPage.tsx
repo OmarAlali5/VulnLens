@@ -12,6 +12,7 @@ const DEFAULT_OPTIONS: ScanOptions = {
   headers_scan: true,
   port_scan: true,
   tech_scan: true,
+  subdomain_scan: true,
   port_list: null,
 }
 
@@ -56,12 +57,14 @@ export function NewScanPage() {
     e.preventDefault()
     setValidationError(null)
 
+    // Basic sanity check to ensure they didn't just submit spaces
     const trimmed = target.trim()
     if (!trimmed) {
       setValidationError('Target URL is required')
       return
     }
 
+    // Rely on the browser's native URL parser to ensure the format is actually valid
     try {
       new URL(trimmed)
     } catch {
@@ -70,6 +73,7 @@ export function NewScanPage() {
     }
 
     let portList: number[] | null = null
+    // If they provided a custom port list, we need to parse and validate it
     if (portListInput.trim()) {
       const ports = portListInput
         .split(/[,\s]+/)
@@ -89,7 +93,9 @@ export function NewScanPage() {
     }
 
     try {
+      // Fire off the API request to create the scan job
       const result = await createScan.mutateAsync(payload)
+      // Instantly jump to the results page where the spinner will be waiting
       navigate(`/scans/${result.scan_id}`)
     } catch (err) {
       setValidationError(getErrorMessage(err, 'Failed to create scan'))
@@ -143,6 +149,12 @@ export function NewScanPage() {
                 description="Passive detection of web servers, frameworks, CMS, CDNs, and libraries."
                 checked={options.tech_scan}
                 onChange={(v) => updateOption('tech_scan', v)}
+              />
+              <ModuleToggle
+                label="Subdomain Enumeration"
+                description="Passive discovery using multiple OSINT sources via Subfinder."
+                checked={options.subdomain_scan}
+                onChange={(v) => updateOption('subdomain_scan', v)}
               />
             </fieldset>
 
