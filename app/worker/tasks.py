@@ -20,21 +20,26 @@ logger = logging.getLogger(__name__)
 
 
 def _module_result_to_dict(result: Any) -> dict[str, Any]:
+    """Helper to ensure we always return a standardized dictionary format, even on failure."""
     if isinstance(result, dict):
         return result
     if isinstance(result, BaseException):
+        # We caught an unhandled exception during the async scan module
         return {
             "status": "error",
             "error": {"code": "MODULE_EXCEPTION", "message": str(result)},
             "findings": [],
         }
+    # Fallback for weird edge cases
     return {"status": "error", "error": {"code": "UNKNOWN", "message": "Unknown result"}}
 
 
 async def _run_scan_modules(target: str, options: dict[str, Any]) -> dict[str, Any]:
+    """Dynamically construct and execute the scan tasks based on user options."""
     modules: dict[str, Any] = {}
     tasks: list[tuple[str, Any]] = []
 
+    # Queue up the modules the user asked for
     if options.get("ssl_scan", True):
         tasks.append(("ssl", inspect_ssl_async(target)))
     if options.get("headers_scan", True):
@@ -48,13 +53,16 @@ async def _run_scan_modules(target: str, options: dict[str, Any]) -> dict[str, A
         tasks.append(("subdomain", discover_subdomains_async(target)))
 
     if not tasks:
+        # User deselected everything, nothing to do
         return modules
 
+    # Run everything concurrently for maximum speed
     results = await asyncio.gather(
         *[coro for _, coro in tasks],
         return_exceptions=True,
     )
 
+    # Stitch the results back together with their module names
     for (name, _), result in zip(tasks, results):
         modules[name] = _module_result_to_dict(result)
 
@@ -63,20 +71,28 @@ async def _run_scan_modules(target: str, options: dict[str, Any]) -> dict[str, A
 
 @celery_app.task(name="app.worker.tasks.scan_task", bind=True, max_retries=0)
 def scan_task(self, scan_id: str) -> None:
+    """The main background worker process triggered when a new scan is created."""
     db = SessionLocal()
     try:
+        # Look up the scan job from the database
         job = db.get(ScanJob, uuid.UUID(scan_id))
         if job is None:
             logger.error("Scan job %s not found", scan_id)
             return
 
+        # Mark as running so the frontend shows the progress spinner
         job.status = ScanStatusEnum.RUNNING
         db.commit()
 
         options = job.options or {}
         try:
+            # Fire off the scan modules asynchronously
             modules = asyncio.run(_run_scan_modules(job.target_url, options))
+            
+            # Tally up the final score (critical, high, medium, etc.)
             summary = summarize_findings(modules)
+            
+            # Format the final JSON response for the database
             payload = {
                 "target": job.target_url,
                 "scanned_at": datetime.now(timezone.utc).isoformat(),
@@ -87,10 +103,13 @@ def scan_task(self, scan_id: str) -> None:
             job.status = ScanStatusEnum.COMPLETED
             job.error_message = None
         except Exception as exc:
+            # Uh oh, something catastrophic failed outside the module try/catch
             logger.exception("Scan %s failed", scan_id)
             job.status = ScanStatusEnum.FAILED
             job.error_message = str(exc)
 
+        # Save the final results to Postgres
         db.commit()
     finally:
+        # Always clean up the database connection
         db.close()
