@@ -111,11 +111,14 @@ def _analyze_headers(
     *,
     is_https: bool,
 ) -> list[Finding]:
+    """Inspects the HTTP response headers for missing or misconfigured security protections."""
     findings: list[Finding] = []
     lower_headers = {k.lower(): v for k, v in response_headers.items()}
 
+    # Run through our master list of required security headers
     for header_name, (code, severity) in SECURITY_HEADERS.items():
         if header_name not in lower_headers:
+            # HSTS is only applicable over HTTPS, ignore if it's plain HTTP
             if header_name == "strict-transport-security" and not is_https:
                 continue
             findings.append(
@@ -126,6 +129,7 @@ def _analyze_headers(
                 )
             )
 
+    # Check for misconfigured HSTS
     hsts = lower_headers.get("strict-transport-security", "")
     if hsts and "max-age=0" in hsts.replace(" ", ""):
         findings.append(
@@ -136,6 +140,7 @@ def _analyze_headers(
             )
         )
 
+    # Check if they explicitly allow framing (clickjacking risk)
     xfo = lower_headers.get("x-frame-options", "").upper()
     if xfo == "ALLOWALL" or xfo == "ALLOW":
         findings.append(
@@ -146,6 +151,7 @@ def _analyze_headers(
             )
         )
 
+    # See if the server is leaking its exact software version
     server = lower_headers.get("server", "")
     if server:
         findings.append(
@@ -156,6 +162,7 @@ def _analyze_headers(
             )
         )
 
+    # Scrutinize every cookie for secure transmission flags
     for cookie in cookies:
         issues: list[str] = []
         if not cookie.secure and is_https:
@@ -189,6 +196,8 @@ async def inspect_headers_async(
     is_https = parsed.scheme == "https"
 
     try:
+        # We don't follow redirects here because we want to analyze the exact endpoint requested.
+        # Often, a redirect itself is missing security headers before sending you to the secure site.
         async with httpx.AsyncClient(
             follow_redirects=False,
             timeout=timeout,
