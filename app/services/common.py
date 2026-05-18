@@ -32,6 +32,7 @@ class ModuleScanError:
 
 
 def serialize(obj: Any) -> Any:
+    """Recursively converts dataclasses, enums, and native types into a JSON-friendly format."""
     if isinstance(obj, Enum):
         return obj.value
     if hasattr(obj, "__dataclass_fields__"):
@@ -44,6 +45,7 @@ def serialize(obj: Any) -> Any:
 
 
 def summarize_findings(modules: dict[str, Any]) -> dict[str, int]:
+    """Tally up the total number of findings across all scan modules by severity level."""
     counts = {s.value: 0 for s in FindingSeverity}
     for module_data in modules.values():
         if not isinstance(module_data, dict):
